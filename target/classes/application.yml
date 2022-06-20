@@ -1,0 +1,42 @@
+spring:
+  mvc:
+    throw-exception-if-no-handler-found: true
+  resources:
+    add-mappings: false
+  main:
+    banner-mode: 'OFF'
+  jackson:
+    serialization:
+      write_dates_as_timestamps: false
+  devtools:
+    restart:
+      enabled: true
+      additional-exclude: logs/**
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI}
+  jmx:
+    enabled: true
+
+management:
+  context-path: /actuator
+  endpoints:
+    web:
+      exposure:
+        include: env,health,info,refresh,metrics,heapdump,threaddump,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  app:
+    description: "Change this description"
+    name: '@name@'
+    groupId: 'com.sicredi'
+    artifactId: 'api-springboot-votacao'
+    version: '0.0.1-SNAPSHOT'
+    spring-version: '@spring-boot.version@'
+    java-version: '11.0.15'
+
+services:
+  sicredi:
+    cpfGateway: https://user-info.herokuapp.com
+    kafkaTopic: SESSION_FINISHED
