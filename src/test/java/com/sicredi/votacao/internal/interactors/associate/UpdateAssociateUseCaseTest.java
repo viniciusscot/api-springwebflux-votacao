@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,11 +48,11 @@ public class UpdateAssociateUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Associate.class);
 
-        when(this.associateRepository.get(anyString())).thenReturn(mockObject);
+        when(this.associateRepository.get(anyString())).thenReturn(Mono.just(mockObject));
 
-        when(this.associateRepository.save(any(Associate.class))).thenReturn(mockObject);
+        when(this.associateRepository.save(any())).thenReturn(Mono.just(mockObject));
 
-        var useCaseResponse = this.updateAssociateUseCase.execute(anyString(), mockObject);
+        var useCaseResponse = this.updateAssociateUseCase.execute(Mono.just(mockObject)).block();
 
         assertNotNull(useCaseResponse);
         assertThat(mockObject.getId(), equalTo(useCaseResponse.getId()));

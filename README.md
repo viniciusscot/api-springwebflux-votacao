@@ -80,4 +80,4 @@ Para realizar os testes, execute o comando `mvn clean install`, ele ja ira gerar
 e não precisa se preocupar com as conexões com o banco, ou kafka, que nos testes estou usando ambos embedded.
 
 # URLs
- - Documentação swagger do próprio chassis: `http://localhost:8080/api-springboot-votacao/swagger-ui.html`
+ - Documentação swagger do próprio chassis: `http://localhost:8080/swagger-ui/index.html`

@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import java.util.Calendar;
 
@@ -31,7 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -87,14 +89,14 @@ public class CreateVoteUseCaseTest {
         var mockVote = objectMapper.readValue(mockVoteString, Vote.class);
 
         when(this.dateUtils.getDate()).thenReturn(Calendar.getInstance().getTime());
-        when(this.getAssociateByIdUseCase.execute(anyString())).thenReturn(mockAssociate);
-        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(mockSchedulle);
-        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any())).thenReturn(mockSession);
-        doNothing().when(this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase).execute(anyString(), anyString());
-        when(this.verifyCpfUseCase.execute(anyString())).thenReturn(Boolean.TRUE);
-        when(this.voteRepository.save(any(Vote.class))).thenReturn(mockVote);
+        when(this.getAssociateByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockAssociate));
+        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockSchedulle));
+        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any())).thenReturn(Mono.just(mockSession));
+        when(this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase.execute(anyString(), anyString())).thenReturn(Mono.empty());
+        when(this.verifyCpfUseCase.execute(anyString())).thenReturn(Mono.just(Boolean.TRUE));
+        when(this.voteRepository.save(any())).thenReturn(Mono.just(mockVote));
 
-        var useCaseResponse = this.createVoteUseCase.execute(mockVote);
+        var useCaseResponse = this.createVoteUseCase.execute(Mono.just(mockVote)).block();
 
         assertNotNull(useCaseResponse);
         assertThat(mockVote.getId(), equalTo(useCaseResponse.getId()));
@@ -111,11 +113,11 @@ public class CreateVoteUseCaseTest {
         var mockVote = objectMapper.readValue(mockVoteString, Vote.class);
 
         when(this.dateUtils.getDate()).thenReturn(Calendar.getInstance().getTime());
-        when(this.getAssociateByIdUseCase.execute(anyString())).thenReturn(mockAssociate);
-        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(mockSchedulle);
-        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any())).thenReturn(null);
+        when(this.getAssociateByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockAssociate));
+        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockSchedulle));
+        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any())).thenReturn(Mono.empty());
 
-        assertThrows(SessionNotFoundException.class, () -> this.createVoteUseCase.execute(mockVote));
+        assertThrows(SessionNotFoundException.class, () -> this.createVoteUseCase.execute(Mono.just(mockVote)).block());
     }
 
     @Test
@@ -131,12 +133,12 @@ public class CreateVoteUseCaseTest {
         var mockVote = objectMapper.readValue(mockVoteString, Vote.class);
 
         when(this.dateUtils.getDate()).thenReturn(Calendar.getInstance().getTime());
-        when(this.getAssociateByIdUseCase.execute(anyString())).thenReturn(mockAssociate);
-        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(mockSchedulle);
-        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any())).thenReturn(mockSession);
-        doNothing().when(this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase).execute(anyString(), anyString());
-        when(this.verifyCpfUseCase.execute(anyString())).thenReturn(Boolean.FALSE);
+        when(this.getAssociateByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockAssociate));
+        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockSchedulle));
+        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any())).thenReturn(Mono.just(mockSession));
+        when(this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase.execute(anyString(), anyString())).thenReturn(Mono.empty());
+        when(this.verifyCpfUseCase.execute(anyString())).thenReturn(Mono.just(Boolean.FALSE));
 
-        assertThrows(VoteNotAuthorizedException.class, () -> this.createVoteUseCase.execute(mockVote));
+        assertThrows(VoteNotAuthorizedException.class, () -> this.createVoteUseCase.execute(Mono.just(mockVote)).block());
     }
 }

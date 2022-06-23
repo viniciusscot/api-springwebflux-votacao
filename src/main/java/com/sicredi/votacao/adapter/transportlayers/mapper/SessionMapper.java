@@ -1,8 +1,8 @@
 package com.sicredi.votacao.adapter.transportlayers.mapper;
 
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.ResultOfSchedulleResult;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.SessionInput;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.SessionResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.ResultOfSchedulleResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SessionInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SessionResult;
 import com.sicredi.votacao.internal.entities.ResultOfSchedulle;
 import com.sicredi.votacao.internal.entities.Session;
 import org.mapstruct.Mapper;

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -43,9 +44,9 @@ public class DeleteAssociateByIdUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Associate.class);
 
-        when(this.associateRepository.get(anyString())).thenReturn(mockObject);
+        when(this.associateRepository.get(anyString())).thenReturn(Mono.just(mockObject));
 
-        doNothing().when(this.associateRepository).delete(anyString());
+        when(this.associateRepository.delete(anyString())).thenReturn(Mono.empty());
 
         assertDoesNotThrow(() -> this.deleteAssociateByIdUseCase.execute(anyString()));
     }

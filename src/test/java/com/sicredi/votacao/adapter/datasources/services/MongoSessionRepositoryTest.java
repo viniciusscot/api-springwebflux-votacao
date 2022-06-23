@@ -56,9 +56,9 @@ public class MongoSessionRepositoryTest {
 
         final var sessionModel = objectMapper.readValue(mockResultString, SessionModel.class);
 
-        final var savedSession = this.mongoSessionRepository.save(sessionModel);
+        final var savedSession = this.mongoSessionRepository.save(sessionModel).block();
 
-        final Optional<SessionModel> optionalRetrievedById = this.mongoSessionRepository.findById(savedSession.getId());
+        final Optional<SessionModel> optionalRetrievedById = this.mongoSessionRepository.findById(savedSession.getId()).blockOptional();
         final SessionModel retrievedById = optionalRetrievedById.orElseThrow(IllegalArgumentException::new);
 
         assertThat(savedSession.getId(), equalTo(retrievedById.getId()));
@@ -67,7 +67,7 @@ public class MongoSessionRepositoryTest {
     @Test
     @DisplayName("Should return optional blank when find a not exist register in mongo db")
     void shouldReturnOptionalIsPresentFalseWhenRecordDoNotExistsInMongoDB() {
-        final Optional<SessionModel> optionalRetrievedById = this.mongoSessionRepository.findById("1");
+        final Optional<SessionModel> optionalRetrievedById = this.mongoSessionRepository.findById("1").blockOptional();
         assertFalse(optionalRetrievedById.isPresent());
     }
 

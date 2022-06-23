@@ -3,6 +3,7 @@ package com.sicredi.votacao.internal.interactors.schedulle;
 import com.sicredi.votacao.internal.entities.Schedulle;
 import com.sicredi.votacao.internal.repositories.SchedulleRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class GetAllSchedullesUseCase {
         this.schedulleRepository = schedulleRepository;
     }
 
-    public List<Schedulle> execute() {
+    public Flux<Schedulle> execute() {
         return this.schedulleRepository.getAll();
     }
 

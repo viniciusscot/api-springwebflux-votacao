@@ -1,48 +1,40 @@
 package com.sicredi.votacao.adapter.transportlayers.restapi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.AssociateResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SessionInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SessionResult;
 import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.interactors.session.OpenVoteSessionUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebFluxTest(SessionControllerImpl.class)
 public class SessionControllerTest {
-    private final OpenVoteSessionUseCase openVoteSessionUseCase;
-    private final MockMvc mockMvc;
-    private final ObjectMapper objectMapper;
+    @MockBean
+    private OpenVoteSessionUseCase openVoteSessionUseCase;
+
+    @Autowired
+    WebTestClient webTestClient;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("classpath:datasource/sicredi/payload/session.json")
     private Resource sessionResource;
-
-    @Autowired
-    public SessionControllerTest(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-        this.openVoteSessionUseCase = Mockito.mock(OpenVoteSessionUseCase.class);
-        var sessionController = new SessionControllerImpl(this.openVoteSessionUseCase);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(sessionController).build();
-    }
 
     @Test
     @DisplayName("Should return session when open vote session")
@@ -51,14 +43,17 @@ public class SessionControllerTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Session.class);
 
-        when(this.openVoteSessionUseCase.execute(any(Session.class))).thenReturn(mockObject);
+        var mockEntryObject = objectMapper.readValue(mockResultString, SessionInput.class);
 
-        this.mockMvc.perform(
-                        post("/sessions")
-                                .content(mockResultString)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.durationInMinutes", is("30")));
+        when(this.openVoteSessionUseCase.execute(any())).thenReturn(Mono.just(mockObject));
+
+        this.webTestClient.post()
+                .uri("/sessions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(mockEntryObject), SessionInput.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(SessionResult.class);
     }
 }

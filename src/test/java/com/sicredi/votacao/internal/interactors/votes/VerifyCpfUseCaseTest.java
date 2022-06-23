@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
+import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -30,9 +31,9 @@ public class VerifyCpfUseCaseTest {
     void shouldReturnTrueWhenVerifyCpf() {
         final var mockObject = new VerifyCpf().setStatus(VerifyCpf.StatusEnum.ABLE_TO_VOTE);
 
-        when(this.verifyCpfRepository.isValidAndCanVote(anyString())).thenReturn(mockObject);
+        when(this.verifyCpfRepository.isValidAndCanVote(anyString())).thenReturn(Mono.just(mockObject));
 
-        var useCaseResponse = this.verifyCpfUseCase.execute(anyString());
+        var useCaseResponse = this.verifyCpfUseCase.execute(anyString()).block();
 
         assertNotNull(useCaseResponse);
         assertTrue(useCaseResponse);
@@ -43,9 +44,9 @@ public class VerifyCpfUseCaseTest {
     void shouldReturnFalseWhenVerifyCpf() {
         final var mockObject = new VerifyCpf().setStatus(VerifyCpf.StatusEnum.UNABLE_TO_VOTE);
 
-        when(this.verifyCpfRepository.isValidAndCanVote(anyString())).thenReturn(mockObject);
+        when(this.verifyCpfRepository.isValidAndCanVote(anyString())).thenReturn(Mono.just(mockObject));
 
-        var useCaseResponse = this.verifyCpfUseCase.execute(anyString());
+        var useCaseResponse = this.verifyCpfUseCase.execute(anyString()).block();
 
         assertNotNull(useCaseResponse);
         assertFalse(useCaseResponse);

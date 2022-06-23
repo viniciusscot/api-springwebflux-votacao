@@ -7,11 +7,11 @@ import com.sicredi.votacao.bootstrap.utils.DateUtils;
 import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.repositories.SessionRepository;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class SessionDataSource implements SessionRepository {
@@ -25,42 +25,37 @@ public class SessionDataSource implements SessionRepository {
     }
 
     @Override
-    public Session save(final Session session) {
-        final var sessionModel = SessionMapper.INSTANCE.map(session);
-        final var sessionSaved = this.repository.save(sessionModel);
-        return SessionMapper.INSTANCE.map(sessionSaved);
+    public Mono<Session> save(final Mono<Session> session) {
+        return session
+                .map(SessionMapper.INSTANCE::map)
+                .flatMap(this.repository::save)
+                .map(SessionMapper.INSTANCE::map);
     }
 
     @Override
-    public Session getBySchedulleIdAndStartDateAndEndDate(final String schedulleId,
-                                                          final OffsetDateTime date) {
-        final var session =
-                this.repository.findBySchedulleIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(schedulleId, date, date)
-                        .orElse(null);
-
-        return SessionMapper.INSTANCE.map(session);
+    public Mono<Session> getBySchedulleIdAndStartDateAndEndDate(final String schedulleId,
+                                                                final OffsetDateTime date) {
+        return this.repository.findBySchedulleIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(schedulleId, date, date)
+                .map(SessionMapper.INSTANCE::map);
     }
 
     @Override
-    public List<Session> getAllBySchedulleId(final String schedulleId) {
+    public Flux<Session> getAllBySchedulleId(final String schedulleId) {
         return this.repository.findAllBySchedulleId(schedulleId)
-                .stream().map(s -> SessionMapper.INSTANCE.map(s))
-                .collect(Collectors.toList());
+                .map(SessionMapper.INSTANCE::map);
     }
 
     @Override
-    public List<Session> getFinishedSessions() {
+    public Flux<Session> getFinishedSessions() {
         final var now = this.dateUtils.getDate().toInstant().atOffset(ZoneOffset.UTC);
         return this.repository.findAllByFinishedAndAndEndDateLessThanEqual(Boolean.FALSE, now)
-                .stream().map(s -> SessionMapper.INSTANCE.map(s))
-                .collect(Collectors.toList());
+                .map(SessionMapper.INSTANCE::map);
     }
 
     @Override
-    public Session get(final String id) {
-        final var session = this.repository.findById(id)
-                .orElseThrow(() -> new SessionNotFoundException(id));
-
-        return SessionMapper.INSTANCE.map(session);
+    public Mono<Session> get(final String id) {
+        return this.repository.findById(id)
+                .switchIfEmpty(Mono.error(new SessionNotFoundException(id)))
+                .map(SessionMapper.INSTANCE::map);
     }
 }

@@ -1,19 +1,20 @@
 package com.sicredi.votacao.adapter.transportlayers.restapi;
 
 import com.sicredi.votacao.adapter.transportlayers.mapper.AssociateMapper;
-import com.sicredi.votacao.adapter.transportlayers.openapi.api.AssociatesApi;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.AssociateInput;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.AssociateResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.AssociateInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.AssociateResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.openapi.AssociatesApi;
 import com.sicredi.votacao.internal.interactors.associate.*;
 import io.swagger.annotations.Api;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 @RestController
 @RequestMapping("/")
@@ -39,40 +40,41 @@ public class AssociateControllerImpl implements AssociatesApi {
     }
 
     @Override
-    public ResponseEntity<AssociateResult> createAssociate(final AssociateInput associateInput) {
-        final var associate = AssociateMapper.INSTANCE.map(associateInput);
-        final var associateSaved = this.createAssociateUseCase.execute(associate);
-        final var response = AssociateMapper.INSTANCE.map(associateSaved);
-        return ResponseEntity.status(CREATED).body(response);
+    public Mono<ResponseEntity<AssociateResult>> createAssociate(final Mono<AssociateInput> associateInput) {
+        return associateInput
+                .map(AssociateMapper.INSTANCE::map)
+                .flatMap(a -> this.createAssociateUseCase.execute(Mono.just(a)))
+                .map(AssociateMapper.INSTANCE::map)
+                .map(a -> ResponseEntity.status(CREATED).body(a));
     }
 
     @Override
-    public ResponseEntity<Void> deleteAssociate(final String associateId) {
-        this.deleteAssociateByIdUseCase.execute(associateId);
-        return ResponseEntity.status(NO_CONTENT).build();
+    @ResponseStatus(NO_CONTENT)
+    public Mono<ResponseEntity<Void>> deleteAssociate(final String associateId) {
+        return this.deleteAssociateByIdUseCase.execute(associateId)
+                .map(a -> ResponseEntity.status(NO_CONTENT).build());
     }
 
     @Override
-    public ResponseEntity<AssociateResult> getAssociate(final String associateId) {
-        final var associate = this.getAssociateByIdUseCase.execute(associateId);
-        final var response = AssociateMapper.INSTANCE.map(associate);
-        return ResponseEntity.status(OK).body(response);
+    public Mono<ResponseEntity<AssociateResult>> getAssociate(final String associateId) {
+        return this.getAssociateByIdUseCase.execute(associateId)
+                .map(AssociateMapper.INSTANCE::map)
+                .map(ResponseEntity::ok);
     }
 
     @Override
-    public ResponseEntity<List<AssociateResult>> getAllAssociates() {
-        final var response = this.getAllAssociatesUseCase.execute().stream()
-                .map(a -> AssociateMapper.INSTANCE.map(a))
-                .collect(Collectors.toList());
-        return ResponseEntity.status(OK).body(response);
+    public Flux<AssociateResult> getAllAssociates() {
+        return this.getAllAssociatesUseCase.execute()
+                .map(AssociateMapper.INSTANCE::map);
     }
 
     @Override
-    public ResponseEntity<AssociateResult> updateAssociate(final String associateId, final AssociateInput associateInput) {
-        final var associate = AssociateMapper.INSTANCE.map(associateInput);
-        final var associateSaved = this.updateAssociateUseCase.execute(associateId, associate);
-        final var response = AssociateMapper.INSTANCE.map(associateSaved);
-        return ResponseEntity.status(OK).body(response);
+    public Mono<ResponseEntity<AssociateResult>> updateAssociate(final Mono<AssociateInput> associateInput) {
+        return associateInput
+                .map(AssociateMapper.INSTANCE::map)
+                .flatMap(a -> this.createAssociateUseCase.execute(Mono.just(a)))
+                .map(AssociateMapper.INSTANCE::map)
+                .map(ResponseEntity::ok);
     }
 
 }

@@ -1,36 +1,28 @@
 package com.sicredi.votacao.adapter.datasources;
 
-import com.sicredi.votacao.adapter.datasources.services.VerifyCpfGateway;
-import com.sicredi.votacao.adapter.datasources.services.mapper.VerificaCpfMapper;
 import com.sicredi.votacao.bootstrap.exceptions.VoteNotAuthorizedException;
 import com.sicredi.votacao.internal.entities.VerifyCpf;
 import com.sicredi.votacao.internal.repositories.VerifyCpfRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-
-import static feign.FeignException.FeignClientException;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Component
 public class VerifyCpfDataSource implements VerifyCpfRepository {
 
-    private final VerifyCpfGateway verifyCpfGateway;
+    private final WebClient verifyCpfGateway;
 
-    public VerifyCpfDataSource(VerifyCpfGateway verifyCpfGateway) {
+    public VerifyCpfDataSource(WebClient verifyCpfGateway) {
         this.verifyCpfGateway = verifyCpfGateway;
     }
 
     @Override
-    public VerifyCpf isValidAndCanVote(String cpf) {
-        try {
-            final var cr = verifyCpfGateway.isValidAndCanVote(cpf);
+    public Mono<VerifyCpf> isValidAndCanVote(String cpf) {
+        return verifyCpfGateway.get()
+                .uri("/users/".concat(cpf))
+                .retrieve()
+                .bodyToMono(VerifyCpf.class)
+                .onErrorMap(throwable -> new VoteNotAuthorizedException(String.format("The cpf of number %s is invalid", cpf)));
 
-            return VerificaCpfMapper.INSTANCE.map(cr);
-        } catch (FeignClientException ex) {
-            if (HttpStatus.NOT_FOUND.value() == ex.status())
-                throw new VoteNotAuthorizedException(String.format("The cpf of number %s is invalid", cpf));
-
-            throw ex;
-
-        }
     }
 }

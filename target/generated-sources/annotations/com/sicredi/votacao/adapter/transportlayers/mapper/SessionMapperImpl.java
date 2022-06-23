@@ -1,14 +1,14 @@
 package com.sicredi.votacao.adapter.transportlayers.mapper;
 
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.SessionInput;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.SessionResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SessionInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SessionResult;
 import com.sicredi.votacao.internal.entities.Session;
 import java.math.BigInteger;
 import javax.annotation.processing.Generated;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2022-06-03T15:12:54-0300",
+    date = "2022-06-22T22:48:27-0300",
     comments = "version: 1.4.2.Final, compiler: javac, environment: Java 11.0.15 (Private Build)"
 )
 public class SessionMapperImpl implements SessionMapper {

@@ -1,54 +1,42 @@
 package com.sicredi.votacao.adapter.transportlayers.restapi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.VoteInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.VoteResult;
 import com.sicredi.votacao.internal.entities.Vote;
 import com.sicredi.votacao.internal.interactors.votes.CreateVoteUseCase;
 import com.sicredi.votacao.internal.interactors.votes.GetAllVotesUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.StreamUtils;
-
-import java.util.Arrays;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebFluxTest(VoteControllerImpl.class)
 public class VoteControllerTest {
-    private final GetAllVotesUseCase getAllVotesUseCase;
-    private final CreateVoteUseCase createVoteUseCase;
-    private final MockMvc mockMvc;
-    private final ObjectMapper objectMapper;
+
+    @Autowired
+    WebTestClient webTestClient;
+    @MockBean
+    private GetAllVotesUseCase getAllVotesUseCase;
+    @MockBean
+    private CreateVoteUseCase createVoteUseCase;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("classpath:datasource/sicredi/payload/vote.json")
     private Resource voteResource;
-
-    @Autowired
-    public VoteControllerTest(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-        this.getAllVotesUseCase = Mockito.mock(GetAllVotesUseCase.class);
-        this.createVoteUseCase = Mockito.mock(CreateVoteUseCase.class);
-        var sessionController = new VoteControllerImpl(this.getAllVotesUseCase, this.createVoteUseCase);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(sessionController).build();
-    }
 
     @Test
     @DisplayName("Should return vote when create vote")
@@ -57,17 +45,18 @@ public class VoteControllerTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Vote.class);
 
-        when(this.createVoteUseCase.execute(any(Vote.class))).thenReturn(mockObject);
+        var mockEntryObject = objectMapper.readValue(mockResultString, VoteInput.class);
 
-        this.mockMvc.perform(
-                        post("/votes")
-                                .content(mockResultString)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.decision", is(Boolean.TRUE)))
-                .andExpect(jsonPath("$.associateId", is("any_associate_id")))
-                .andExpect(jsonPath("$.schedulleId", is("any_schedulle_id")));
+        when(this.createVoteUseCase.execute(any())).thenReturn(Mono.just(mockObject));
+
+        this.webTestClient.post()
+                .uri("/votes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(mockEntryObject), VoteInput.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(VoteResult.class);
     }
 
     @Test
@@ -77,15 +66,13 @@ public class VoteControllerTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Vote.class);
 
-        when(this.getAllVotesUseCase.execute()).thenReturn(Arrays.asList(mockObject));
+        when(this.getAllVotesUseCase.execute()).thenReturn(Flux.just(mockObject));
 
-        this.mockMvc.perform(
-                        get("/votes")
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].decision", is(Boolean.TRUE)))
-                .andExpect(jsonPath("$[0].associateId", is("any_associate_id")))
-                .andExpect(jsonPath("$[0].schedulleId", is("any_schedulle_id")));
+        this.webTestClient.get()
+                .uri("/votes")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(VoteResult.class);
     }
 }

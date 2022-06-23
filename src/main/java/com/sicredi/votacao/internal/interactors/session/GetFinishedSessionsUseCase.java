@@ -3,8 +3,7 @@ package com.sicredi.votacao.internal.interactors.session;
 import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.repositories.SessionRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
 
 @Service
 public class GetFinishedSessionsUseCase {
@@ -15,7 +14,7 @@ public class GetFinishedSessionsUseCase {
         this.sessionRepository = sessionRepository;
     }
 
-    public List<Session> execute() {
+    public Flux<Session> execute() {
         return this.sessionRepository.getFinishedSessions();
     }
 }

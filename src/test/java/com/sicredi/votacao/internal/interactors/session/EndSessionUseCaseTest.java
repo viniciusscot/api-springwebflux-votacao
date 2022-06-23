@@ -12,8 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
-
-import java.util.Collections;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -49,9 +49,9 @@ public class EndSessionUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Session.class);
 
-        when(this.getFinishedSessionsUseCase.execute()).thenReturn(Collections.singletonList(mockObject));
-        when(this.updateSessionUseCase.execute(any(Session.class))).thenReturn(mockObject);
-        doNothing().when(this.sendMessageUseCase).execute(mockObject);
+        when(this.getFinishedSessionsUseCase.execute()).thenReturn(Flux.just(mockObject));
+        when(this.updateSessionUseCase.execute(any())).thenReturn(Mono.just(mockObject));
+        when(this.sendMessageUseCase.execute(Mono.just(mockObject))).thenReturn(Mono.empty());
 
         assertDoesNotThrow(() -> this.endSessionUseCase.execute());
     }

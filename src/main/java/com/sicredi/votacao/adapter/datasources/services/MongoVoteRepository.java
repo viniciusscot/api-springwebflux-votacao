@@ -1,17 +1,16 @@
 package com.sicredi.votacao.adapter.datasources.services;
 
 import com.sicredi.votacao.adapter.datasources.services.model.VoteModel;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface MongoVoteRepository extends MongoRepository<VoteModel, String> {
+public interface MongoVoteRepository extends ReactiveMongoRepository<VoteModel, String> {
 
-    Optional<VoteModel> findByAssociateIdAndSchedulleId(String associateId, String schedulleId);
+    Mono<VoteModel> findByAssociateIdAndSchedulleId(String associateId, String schedulleId);
 
-    List<VoteModel> findAllBySessionId(String sessionId);
+    Flux<VoteModel> findAllBySessionId(String sessionId);
 
 }

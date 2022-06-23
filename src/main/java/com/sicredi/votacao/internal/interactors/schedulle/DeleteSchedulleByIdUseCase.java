@@ -2,6 +2,7 @@ package com.sicredi.votacao.internal.interactors.schedulle;
 
 import com.sicredi.votacao.internal.repositories.SchedulleRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class DeleteSchedulleByIdUseCase {
@@ -12,10 +13,10 @@ public class DeleteSchedulleByIdUseCase {
         this.schedulleRepository = schedulleRepository;
     }
 
-    public void execute(final String schedulleId) {
+    public Mono<Void> execute(final String schedulleId) {
         this.schedulleRepository.get(schedulleId);
 
-        this.schedulleRepository.delete(schedulleId);
+        return this.schedulleRepository.delete(schedulleId);
     }
 
 }

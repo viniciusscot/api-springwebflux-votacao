@@ -1,21 +1,20 @@
 package com.sicredi.votacao.adapter.transportlayers.restapi;
 
 import com.sicredi.votacao.adapter.transportlayers.mapper.VoteMapper;
-import com.sicredi.votacao.adapter.transportlayers.openapi.api.VotesApi;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.VoteInput;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.VoteResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.VoteInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.VoteResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.openapi.VotesApi;
 import com.sicredi.votacao.internal.interactors.votes.CreateVoteUseCase;
 import com.sicredi.votacao.internal.interactors.votes.GetAllVotesUseCase;
 import io.swagger.annotations.Api;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequestMapping("/")
@@ -32,19 +31,18 @@ public class VoteControllerImpl implements VotesApi {
     }
 
     @Override
-    public ResponseEntity<VoteResult> createVote(final VoteInput voteInput) {
-        final var vote = VoteMapper.INSTANCE.map(voteInput);
-        final var voteSaved = this.createVoteUseCase.execute(vote);
-        final var response = VoteMapper.INSTANCE.map(voteSaved);
-        return ResponseEntity.status(CREATED).body(response);
+    @ResponseStatus(CREATED)
+    public Mono<ResponseEntity<VoteResult>> createVote(final Mono<VoteInput> voteInput) {
+        return voteInput
+                .map(VoteMapper.INSTANCE::map)
+                .flatMap(a -> this.createVoteUseCase.execute(Mono.just(a)))
+                .map(VoteMapper.INSTANCE::map)
+                .map(a -> ResponseEntity.status(CREATED).body(a));
     }
 
     @Override
-    public ResponseEntity<List<VoteResult>> getAllVotes() {
-        final var votes = this.getAllVotesUseCase.execute();
-        final var response = votes.stream()
-                .map(a -> VoteMapper.INSTANCE.map(a))
-                .collect(Collectors.toList());
-        return ResponseEntity.status(OK).body(response);
+    public Flux<VoteResult> getAllVotes() {
+        return this.getAllVotesUseCase.execute()
+                .map(VoteMapper.INSTANCE::map);
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 
@@ -49,9 +50,9 @@ public class GetSessionBySchedulleIdAndStartDateAndEndDateUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Session.class);
 
-        when(this.sessionRepository.getBySchedulleIdAndStartDateAndEndDate(anyString(), any(OffsetDateTime.class))).thenReturn(mockObject);
+        when(this.sessionRepository.getBySchedulleIdAndStartDateAndEndDate(anyString(), any(OffsetDateTime.class))).thenReturn(Mono.just(mockObject));
 
-        var useCaseResponse = this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(mockObject.getSchedulleId(), mockObject.getStartDate());
+        var useCaseResponse = this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(mockObject.getSchedulleId(), mockObject.getStartDate()).block();
 
         assertNotNull(useCaseResponse);
         assertThat(mockObject.getId(), equalTo(useCaseResponse.getId()));

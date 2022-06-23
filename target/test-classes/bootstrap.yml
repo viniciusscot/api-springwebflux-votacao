@@ -2,7 +2,7 @@ spring:
   profiles:
     active: test
   application:
-    name: api-springboot-votacao
+    name: api-springwebflux-votacao
   jackson:
     serialization:
       write_dates_as_timestamps: false

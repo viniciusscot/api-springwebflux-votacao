@@ -6,9 +6,10 @@ import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.interactors.schedulle.GetSchedulleByIdUseCase;
 import com.sicredi.votacao.internal.repositories.SessionRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.ZoneOffset;
-import java.util.Objects;
 
 @Service
 public class OpenVoteSessionUseCase {
@@ -28,23 +29,23 @@ public class OpenVoteSessionUseCase {
         this.dateUtils = dateUtils;
     }
 
-    public Session execute(Session session) {
+    public Mono<Session> execute(Mono<Session> session) {
         final var now = this.dateUtils.getDate();
 
-        this.getSchedulleByIdUseCase.execute(session.getSchedulleId());
+        return session
+                .publishOn(Schedulers.boundedElastic())
+                .doOnNext(s -> {
+                    this.getSchedulleByIdUseCase.execute(s.getSchedulleId()).block();
 
-        session.setStartDate(now.toInstant()
-                        .atOffset(ZoneOffset.UTC))
-                .setEndDate(this.dateUtils.addMinutesToDate(now, session.getDurationInMinutes())
-                        .toInstant()
-                        .atOffset(ZoneOffset.UTC));
+                    s.setStartDate(now.toInstant()
+                                    .atOffset(ZoneOffset.UTC))
+                            .setEndDate(this.dateUtils.addMinutesToDate(now, s.getDurationInMinutes())
+                                    .toInstant()
+                                    .atOffset(ZoneOffset.UTC));
 
-        final var existingSession = this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(session.getSchedulleId(), session.getStartDate());
-
-        if (Objects.nonNull(existingSession))
-            throw new EntityInUseException("There is already an active session for this schedulle");
-
-
-        return this.sessionRepository.save(session);
+                    if (this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(s.getSchedulleId(), s.getStartDate()).blockOptional().isPresent())
+                        throw new EntityInUseException("There is already an active session for this schedulle");
+                })
+                .flatMap(s -> this.sessionRepository.save(Mono.just(s)));
     }
 }

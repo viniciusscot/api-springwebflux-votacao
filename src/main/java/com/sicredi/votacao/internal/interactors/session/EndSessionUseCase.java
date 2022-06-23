@@ -2,6 +2,8 @@ package com.sicredi.votacao.internal.interactors.session;
 
 import com.sicredi.votacao.internal.interactors.kafka.SendMessageUseCase;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class EndSessionUseCase {
@@ -16,12 +18,15 @@ public class EndSessionUseCase {
         this.sendMessageUseCase = sendMessageUseCase;
     }
 
-    public void execute() {
+    public Mono<Void> execute() {
 
         this.getFinishedSessionsUseCase.execute()
-                .stream().map(s -> this.updateSessionUseCase.execute(s.setFinished(Boolean.TRUE)))
-                .forEach(s -> this.sendMessageUseCase.execute(s));
+                .publishOn(Schedulers.boundedElastic())
+                .doOnNext(s -> this.updateSessionUseCase.execute(Mono.just(s.setFinished(Boolean.TRUE))).block())
+                .publishOn(Schedulers.single())
+                .doOnNext(s -> this.sendMessageUseCase.execute(Mono.just(s)))
+                .subscribe();
 
-        return;
+        return Mono.empty();
     }
 }

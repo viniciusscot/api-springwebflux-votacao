@@ -1,16 +1,16 @@
 package com.sicredi.votacao.internal.repositories;
 
 import com.sicredi.votacao.internal.entities.Vote;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface VoteRepository {
 
-    List<Vote> getAll();
+    Flux<Vote> getAll();
 
-    Vote save(final Vote vote);
+    Mono<Vote> save(final Mono<Vote> vote);
 
-    Vote getByAssociateIdAndSessionId(final String associateId, final String sessionId);
+    Mono<Vote> getByAssociateIdAndSessionId(final String associateId, final String sessionId);
 
-    List<Vote> getAllBySessionId(final String sessionId);
+    Flux<Vote> getAllBySessionId(final String sessionId);
 }

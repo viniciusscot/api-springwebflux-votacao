@@ -5,6 +5,8 @@ import com.sicredi.votacao.adapter.datasources.services.MongoSessionRepository;
 import com.sicredi.votacao.adapter.datasources.services.model.SessionModel;
 import com.sicredi.votacao.bootstrap.exceptions.SessionNotFoundException;
 import com.sicredi.votacao.bootstrap.utils.DateUtils;
+import com.sicredi.votacao.internal.entities.Session;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,11 +17,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -55,9 +57,11 @@ public class SessionDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, SessionModel.class);
 
-        when(this.mongoSessionRepository.save(any())).thenReturn(mockObject);
+        var mockEntryObject = objectMapper.readValue(mockResultString, Session.class);
 
-        var dataSourceResponse = this.sessionDataSource.save(any());
+        when(this.mongoSessionRepository.save(any())).thenReturn(Mono.just(mockObject));
+
+        var dataSourceResponse = this.sessionDataSource.save(Mono.just(mockEntryObject)).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -73,9 +77,9 @@ public class SessionDataSourceTest {
 
         when(this.mongoSessionRepository
                 .findBySchedulleIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(anyString(), any(OffsetDateTime.class), any(OffsetDateTime.class)))
-                .thenReturn(Optional.of(mockObject));
+                .thenReturn(Mono.just(mockObject));
 
-        var dataSourceResponse = this.sessionDataSource.getBySchedulleIdAndStartDateAndEndDate(mockObject.getSchedulleId(), mockObject.getStartDate());
+        var dataSourceResponse = this.sessionDataSource.getBySchedulleIdAndStartDateAndEndDate(mockObject.getSchedulleId(), mockObject.getStartDate()).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -91,9 +95,9 @@ public class SessionDataSourceTest {
 
         when(this.mongoSessionRepository
                 .findBySchedulleIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(anyString(), any(OffsetDateTime.class), any(OffsetDateTime.class)))
-                .thenReturn(Optional.empty());
+                .thenReturn(Mono.empty());
 
-        var dataSourceResponse = this.sessionDataSource.getBySchedulleIdAndStartDateAndEndDate(mockObject.getSchedulleId(), mockObject.getStartDate());
+        var dataSourceResponse = this.sessionDataSource.getBySchedulleIdAndStartDateAndEndDate(mockObject.getSchedulleId(), mockObject.getStartDate()).block();
 
         assertNull(dataSourceResponse);
     }
@@ -105,12 +109,12 @@ public class SessionDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, SessionModel.class);
 
-        when(this.mongoSessionRepository.findAllBySchedulleId(anyString())).thenReturn(Arrays.asList(mockObject));
+        when(this.mongoSessionRepository.findAllBySchedulleId(anyString())).thenReturn(Flux.just(mockObject));
 
         var dataSourceResponse = this.sessionDataSource.getAllBySchedulleId(mockObject.getSchedulleId());
 
         assertNotNull(dataSourceResponse);
-        assertThat(Integer.valueOf(1), equalTo(dataSourceResponse.size()));
+        dataSourceResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
     }
 
     @Test
@@ -122,12 +126,12 @@ public class SessionDataSourceTest {
 
         when(this.dateUtils.getDate()).thenReturn(Calendar.getInstance().getTime());
         when(this.mongoSessionRepository.findAllByFinishedAndAndEndDateLessThanEqual(anyBoolean(), any(OffsetDateTime.class)))
-                .thenReturn(Arrays.asList(mockObject));
+                .thenReturn(Flux.just(mockObject));
 
         var dataSourceResponse = this.sessionDataSource.getFinishedSessions();
 
         assertNotNull(dataSourceResponse);
-        assertThat(Integer.valueOf(1), equalTo(dataSourceResponse.size()));
+        dataSourceResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
     }
 
     @Test
@@ -137,9 +141,9 @@ public class SessionDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, SessionModel.class);
 
-        when(this.mongoSessionRepository.findById(anyString())).thenReturn(Optional.of(mockObject));
+        when(this.mongoSessionRepository.findById(anyString())).thenReturn(Mono.just(mockObject));
 
-        var dataSourceResponse = this.sessionDataSource.get(mockObject.getId());
+        var dataSourceResponse = this.sessionDataSource.get(mockObject.getId()).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -148,9 +152,9 @@ public class SessionDataSourceTest {
     @Test
     @DisplayName("Should throw exception when get by non-existing id")
     void shouldThrowExceptionWhenGetByNonexistingId() {
-        when(this.mongoSessionRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(this.mongoSessionRepository.findById(anyString())).thenReturn(Mono.empty());
 
-        assertThrows(SessionNotFoundException.class, () -> this.sessionDataSource.get(anyString()));
+        assertThrows(SessionNotFoundException.class, () -> this.sessionDataSource.get(anyString()).block());
     }
 
 }

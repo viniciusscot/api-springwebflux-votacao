@@ -3,8 +3,7 @@ package com.sicredi.votacao.internal.interactors.votes;
 import com.sicredi.votacao.internal.entities.Vote;
 import com.sicredi.votacao.internal.repositories.VoteRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
 
 @Service
 public class GetAllVotesBySessionIdUseCase {
@@ -15,7 +14,7 @@ public class GetAllVotesBySessionIdUseCase {
         this.voteRepository = voteRepository;
     }
 
-    public List<Vote> execute(final String sessionId) {
+    public Flux<Vote> execute(final String sessionId) {
         return this.voteRepository.getAllBySessionId(sessionId);
     }
 

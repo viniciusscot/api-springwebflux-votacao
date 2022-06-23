@@ -1,13 +1,13 @@
 package com.sicredi.votacao.adapter.transportlayers.mapper;
 
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.AssociateInput;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.AssociateResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.AssociateInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.AssociateResult;
 import com.sicredi.votacao.internal.entities.Associate;
 import javax.annotation.processing.Generated;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2022-06-03T15:12:54-0300",
+    date = "2022-06-22T22:48:27-0300",
     comments = "version: 1.4.2.Final, compiler: javac, environment: Java 11.0.15 (Private Build)"
 )
 public class AssociateMapperImpl implements AssociateMapper {

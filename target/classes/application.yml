@@ -29,9 +29,9 @@ management:
       application: ${spring.application.name}
   app:
     description: "Change this description"
-    name: '@name@'
+    name: 'api-springwebflux-votacao'
     groupId: 'com.sicredi'
-    artifactId: 'api-springboot-votacao'
+    artifactId: 'api-springwebflux-votacao'
     version: '0.0.1-SNAPSHOT'
     spring-version: '@spring-boot.version@'
     java-version: '11.0.15'

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sicredi.votacao.adapter.datasources.services.event.SessionEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component
 public class KafkaProducer {
@@ -17,12 +18,14 @@ public class KafkaProducer {
         this.objectMapper = objectMapper;
     }
 
-    public void send(final String topic, final SessionEvent payload) {
+    public Mono<Void> send(final String topic, final SessionEvent payload) {
         try {
 
             this.kafkaTemplate.send(topic, this.objectMapper.writeValueAsString(payload));
         } catch (RuntimeException | JsonProcessingException e) {
-            System.out.println("se fodeu");
+            System.out.println("Não enviou");
         }
+
+        return Mono.empty();
     }
 }

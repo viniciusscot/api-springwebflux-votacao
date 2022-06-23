@@ -5,9 +5,7 @@ import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.interactors.session.GetSessionBySchedulleIdUseCase;
 import com.sicredi.votacao.internal.interactors.votes.GetAllVotesBySessionIdUseCase;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import reactor.core.publisher.Flux;
 
 @Service
 public class GetResultsOfSchedulleSessionVoteUseCase {
@@ -21,21 +19,20 @@ public class GetResultsOfSchedulleSessionVoteUseCase {
         this.getAllVotesBySessionIdUseCase = getAllVotesBySessionIdUseCase;
     }
 
-    public List<ResultOfSchedulle> execute(final String schedulleId) {
-        return this.getSessionBySchedulleIdUseCase.execute(schedulleId).stream()
-                .map(this::map)
-                .collect(Collectors.toList());
+    public Flux<ResultOfSchedulle> execute(final String schedulleId) {
+        return this.getSessionBySchedulleIdUseCase.execute(schedulleId)
+                .map(this::map);
     }
 
     private ResultOfSchedulle map(Session session) {
         final var votes = this.getAllVotesBySessionIdUseCase.execute(session.getId());
 
-        Long votesYes = votes.stream().filter(v -> v.getDecision().equals(true)).count();
-        Long votesNo = votes.stream().filter(v -> v.getDecision().equals(false)).count();
+        final var votesYes = votes.filter(v -> v.getDecision().equals(true)).count().block();
+        final var votesNo = votes.filter(v -> v.getDecision().equals(false)).count().block();
 
         return new ResultOfSchedulle()
                 .setSession(session)
-                .setVotes(Long.valueOf(votes.size()))
+                .setVotes(votesYes + votesNo)
                 .setVotesYes(votesYes)
                 .setVotesNo(votesNo)
                 .setResult(votesNo.equals(votesYes) ? "DRAW" : votesNo > votesYes ? "NO" : "YES");

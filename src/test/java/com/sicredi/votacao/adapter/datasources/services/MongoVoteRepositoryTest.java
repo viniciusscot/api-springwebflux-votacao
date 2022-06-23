@@ -56,9 +56,9 @@ public class MongoVoteRepositoryTest {
 
         final var voteModel = objectMapper.readValue(mockResultString, VoteModel.class);
 
-        final var savedVote = this.mongoVoteRepository.save(voteModel);
+        final var savedVote = this.mongoVoteRepository.save(voteModel).block();
 
-        final Optional<VoteModel> optionalRetrievedById = this.mongoVoteRepository.findById(savedVote.getId());
+        final Optional<VoteModel> optionalRetrievedById = this.mongoVoteRepository.findById(savedVote.getId()).blockOptional();
         final VoteModel retrievedById = optionalRetrievedById.orElseThrow(IllegalArgumentException::new);
 
         assertThat(savedVote.getId(), equalTo(retrievedById.getId()));
@@ -67,7 +67,7 @@ public class MongoVoteRepositoryTest {
     @Test
     @DisplayName("Should return optional blank when find a not exist register in mongo db")
     void shouldReturnOptionalIsPresentFalseWhenRecordDoNotExistsInMongoDB() {
-        final Optional<VoteModel> optionalRetrievedById = this.mongoVoteRepository.findById("1");
+        final Optional<VoteModel> optionalRetrievedById = this.mongoVoteRepository.findById("1").blockOptional();
         assertFalse(optionalRetrievedById.isPresent());
     }
 

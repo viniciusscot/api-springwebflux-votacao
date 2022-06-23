@@ -1,7 +1,7 @@
 package com.sicredi.votacao.adapter.transportlayers.mapper;
 
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.VoteInput;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.VoteResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.VoteInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.VoteResult;
 import com.sicredi.votacao.internal.entities.Vote;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;

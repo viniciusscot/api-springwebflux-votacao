@@ -3,6 +3,7 @@ package com.sicredi.votacao.internal.interactors.associate;
 import com.sicredi.votacao.internal.entities.Associate;
 import com.sicredi.votacao.internal.repositories.AssociateRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class CreateAssociateUseCase {
@@ -13,7 +14,7 @@ public class CreateAssociateUseCase {
         this.associateRepository = associateRepository;
     }
 
-    public Associate execute(final Associate associate) {
+    public Mono<Associate> execute(final Mono<Associate> associate) {
         return this.associateRepository.save(associate);
     }
 

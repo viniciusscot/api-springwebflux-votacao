@@ -5,6 +5,7 @@ import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.entities.Vote;
 import com.sicredi.votacao.internal.interactors.session.GetSessionBySchedulleIdUseCase;
 import com.sicredi.votacao.internal.interactors.votes.GetAllVotesBySessionIdUseCase;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,8 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
-
-import java.util.Arrays;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -56,14 +57,14 @@ public class GetResultsOfSchedulleSessionVoteUseCaseTest {
         final var mockVoteString = StreamUtils.copyToString(this.votesResource.getInputStream(), UTF_8);
         var mockVote = objectMapper.readValue(mockVoteString, Vote.class);
 
-        when(this.getSessionBySchedulleIdUseCase.execute(anyString())).thenReturn(Arrays.asList(mockSession));
-        when(this.getAllVotesBySessionIdUseCase.execute(mockSession.getId())).thenReturn(Arrays.asList(mockVote));
+        when(this.getSessionBySchedulleIdUseCase.execute(anyString())).thenReturn(Flux.just(mockSession));
+        when(this.getAllVotesBySessionIdUseCase.execute(mockSession.getId())).thenReturn(Flux.just(mockVote));
 
         var useCaseResponse = this.getResultsOfSchedulleSessionVoteUseCase.execute(anyString());
 
         assertNotNull(useCaseResponse);
-        assertThat(Integer.valueOf(1), equalTo(useCaseResponse.size()));
-        assertThat("YES", equalTo(useCaseResponse.get(0).getResult()));
+        assertThat("YES", equalTo(useCaseResponse.blockFirst().getResult()));
+        useCaseResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
     }
 
     @Test
@@ -74,14 +75,14 @@ public class GetResultsOfSchedulleSessionVoteUseCaseTest {
         final var mockVoteString = StreamUtils.copyToString(this.votesResource.getInputStream(), UTF_8);
         var mockVote = objectMapper.readValue(mockVoteString, Vote.class).setDecision(Boolean.FALSE);
 
-        when(this.getSessionBySchedulleIdUseCase.execute(anyString())).thenReturn(Arrays.asList(mockSession));
-        when(this.getAllVotesBySessionIdUseCase.execute(mockSession.getId())).thenReturn(Arrays.asList(mockVote));
+        when(this.getSessionBySchedulleIdUseCase.execute(anyString())).thenReturn(Flux.just(mockSession));
+        when(this.getAllVotesBySessionIdUseCase.execute(mockSession.getId())).thenReturn(Flux.just(mockVote));
 
         var useCaseResponse = this.getResultsOfSchedulleSessionVoteUseCase.execute(anyString());
 
         assertNotNull(useCaseResponse);
-        assertThat(Integer.valueOf(1), equalTo(useCaseResponse.size()));
-        assertThat("NO", equalTo(useCaseResponse.get(0).getResult()));
+        assertThat("NO", equalTo(useCaseResponse.blockFirst().getResult()));
+        useCaseResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
     }
 
     @Test
@@ -90,13 +91,13 @@ public class GetResultsOfSchedulleSessionVoteUseCaseTest {
         final var mockSessionString = StreamUtils.copyToString(this.sessionResource.getInputStream(), UTF_8);
         var mockSession = objectMapper.readValue(mockSessionString, Session.class);
 
-        when(this.getSessionBySchedulleIdUseCase.execute(anyString())).thenReturn(Arrays.asList(mockSession));
-        when(this.getAllVotesBySessionIdUseCase.execute(mockSession.getId())).thenReturn(Arrays.asList());
+        when(this.getSessionBySchedulleIdUseCase.execute(anyString())).thenReturn(Flux.just(mockSession));
+        when(this.getAllVotesBySessionIdUseCase.execute(mockSession.getId())).thenReturn(Flux.empty());
 
         var useCaseResponse = this.getResultsOfSchedulleSessionVoteUseCase.execute(anyString());
 
         assertNotNull(useCaseResponse);
-        assertThat(Integer.valueOf(1), equalTo(useCaseResponse.size()));
-        assertThat("DRAW", equalTo(useCaseResponse.get(0).getResult()));
+        assertThat("DRAW", equalTo(useCaseResponse.blockFirst().getResult()));
+        useCaseResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
     }
 }

@@ -3,6 +3,7 @@ package com.sicredi.votacao.internal.interactors.schedulle;
 import com.sicredi.votacao.internal.entities.Schedulle;
 import com.sicredi.votacao.internal.repositories.SchedulleRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class GetSchedulleByIdUseCase {
@@ -13,7 +14,7 @@ public class GetSchedulleByIdUseCase {
         this.schedulleRepository = schedulleRepository;
     }
 
-    public Schedulle execute(final String schedulleId) {
+    public Mono<Schedulle> execute(final String schedulleId) {
         return this.schedulleRepository.get(schedulleId);
     }
 

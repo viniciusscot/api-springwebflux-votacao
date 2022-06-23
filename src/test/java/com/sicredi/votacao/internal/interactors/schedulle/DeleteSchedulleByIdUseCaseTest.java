@@ -12,11 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -43,9 +45,9 @@ public class DeleteSchedulleByIdUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Schedulle.class);
 
-        when(this.schedulleRepository.get(anyString())).thenReturn(mockObject);
+        when(this.schedulleRepository.get(anyString())).thenReturn(Mono.just(mockObject));
 
-        doNothing().when(this.schedulleRepository).delete(anyString());
+        when(this.schedulleRepository.delete(anyString())).thenReturn(Mono.empty());
 
         assertDoesNotThrow(() -> this.deleteSchedulleByIdUseCase.execute(anyString()));
     }

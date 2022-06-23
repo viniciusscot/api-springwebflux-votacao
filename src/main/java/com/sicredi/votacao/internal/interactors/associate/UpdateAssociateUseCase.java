@@ -2,8 +2,8 @@ package com.sicredi.votacao.internal.interactors.associate;
 
 import com.sicredi.votacao.internal.entities.Associate;
 import com.sicredi.votacao.internal.repositories.AssociateRepository;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class UpdateAssociateUseCase {
@@ -14,12 +14,8 @@ public class UpdateAssociateUseCase {
         this.associateRepository = associateRepository;
     }
 
-    public Associate execute(final String associateId, final Associate associate) {
-        var actualAssociate = this.associateRepository.get(associateId);
-
-        BeanUtils.copyProperties(associate, actualAssociate, "id");
-
-        return this.associateRepository.save(actualAssociate);
+    public Mono<Associate> execute(final Mono<Associate> associate) {
+        return this.associateRepository.save(associate);
     }
 
 }

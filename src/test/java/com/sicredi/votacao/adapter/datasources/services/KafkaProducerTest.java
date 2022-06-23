@@ -42,7 +42,7 @@ public class KafkaProducerTest {
 
         var mockObject = objectMapper.readValue(mockResultString, SessionEvent.class);
 
-        assertDoesNotThrow(() -> this.producer.send(this.topic, mockObject));
+        assertDoesNotThrow(() -> this.producer.send(this.topic, mockObject).block());
     }
 
 }

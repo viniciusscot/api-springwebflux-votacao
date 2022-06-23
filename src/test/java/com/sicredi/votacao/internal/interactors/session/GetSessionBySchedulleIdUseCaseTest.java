@@ -13,11 +13,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
-
-import java.util.Arrays;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -48,11 +49,11 @@ public class GetSessionBySchedulleIdUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Session.class);
 
-        when(this.sessionRepository.getAllBySchedulleId(anyString())).thenReturn(Arrays.asList(mockObject));
+        when(this.sessionRepository.getAllBySchedulleId(anyString())).thenReturn(Flux.just(mockObject));
 
         var useCaseResponse = this.getSessionBySchedulleIdUseCase.execute(mockObject.getSchedulleId());
 
         assertNotNull(useCaseResponse);
-        assertThat(Integer.valueOf(1), CoreMatchers.equalTo(useCaseResponse.size()));
+        useCaseResponse.count().subscribe(c -> assertThat(1L, equalTo(c)));
     }
 }

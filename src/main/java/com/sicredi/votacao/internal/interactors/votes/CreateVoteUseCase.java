@@ -9,9 +9,10 @@ import com.sicredi.votacao.internal.interactors.schedulle.GetSchedulleByIdUseCas
 import com.sicredi.votacao.internal.interactors.session.GetSessionBySchedulleIdAndStartDateAndEndDateUseCase;
 import com.sicredi.votacao.internal.repositories.VoteRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.ZoneOffset;
-import java.util.Objects;
 
 @Service
 public class CreateVoteUseCase {
@@ -40,25 +41,26 @@ public class CreateVoteUseCase {
         this.dateUtils = dateUtils;
     }
 
-    public Vote execute(Vote vote) {
-        final var now = dateUtils.getDate().toInstant().atOffset(ZoneOffset.UTC);
-        final var associate = this.getAssociateByIdUseCase.execute(vote.getAssociateId());
-        final var schedulle = this.getSchedulleByIdUseCase.execute(vote.getSchedulleId());
-        final var session = this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(schedulle.getId(), now);
+    public Mono<Vote> execute(Mono<Vote> vote) {
+        return vote
+                .publishOn(Schedulers.boundedElastic())
+                .doOnNext(v -> {
+                    final var now = dateUtils.getDate().toInstant().atOffset(ZoneOffset.UTC);
+                    final var associate = this.getAssociateByIdUseCase.execute(v.getAssociateId()).block();
+                    final var schedulle = this.getSchedulleByIdUseCase.execute(v.getSchedulleId()).block();
+                    final var session = this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(schedulle.getId(), now).blockOptional();
+                    if (session.isEmpty())
+                        throw new SessionNotFoundException(v.getSchedulleId());
 
-        if (Objects.isNull(session))
-            throw new SessionNotFoundException(schedulle.getId());
+                    this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase.execute(v.getAssociateId(), schedulle.getId()).block();
 
-        vote.setHorary(now)
-                .setSessionId(session.getId());
+                    if (Boolean.FALSE.equals(this.verifyCpfUseCase.execute(associate.getCpf()).block()))
+                        throw new VoteNotAuthorizedException(String.format("Associate with cpf %s is not authorized to vote.", associate.getCpf()));
 
-        this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase.execute(vote.getAssociateId(), schedulle.getId());
-
-        if (Boolean.FALSE.equals(this.verifyCpfUseCase.execute(associate.getCpf())))
-            throw new VoteNotAuthorizedException(String.format("Associate with cpf %s is not authorized to vote.", associate.getCpf()));
-
-
-        return this.voteRepository.save(vote);
+                    v.setHorary(now)
+                            .setSessionId(session.get().getId());
+                })
+                .flatMap(v -> this.voteRepository.save(Mono.just(v)));
     }
 
 }

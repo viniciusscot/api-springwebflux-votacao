@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import java.math.BigInteger;
 import java.time.OffsetDateTime;
@@ -70,14 +71,15 @@ public class OpenVoteSessionUseCaseTest {
         final var time = Calendar.getInstance().getTime();
 
         when(this.dateUtils.getDate()).thenReturn(time);
-        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(mockSchedulle);
+        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockSchedulle));
         when(this.dateUtils.addMinutesToDate(any(Date.class), any(BigInteger.class))).thenReturn(time);
-        when(this.sessionRepository.save(any(Session.class))).thenReturn(mockSession);
+        when(this.sessionRepository.save(any())).thenReturn(Mono.just(mockSession));
 
-        var useCaseResponse = this.openVoteSessionUseCase.execute(mockSession);
+        this.openVoteSessionUseCase.execute(Mono.just(mockSession)).subscribe(a -> {
+            assertNotNull(a);
+            assertThat(mockSession.getId(), equalTo(a.getId()));
 
-        assertNotNull(useCaseResponse);
-        assertThat(mockSession.getId(), equalTo(useCaseResponse.getId()));
+        });
     }
 
     @Test
@@ -90,10 +92,10 @@ public class OpenVoteSessionUseCaseTest {
         final var time = Calendar.getInstance().getTime();
 
         when(this.dateUtils.getDate()).thenReturn(time);
-        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(mockSchedulle);
+        when(this.getSchedulleByIdUseCase.execute(anyString())).thenReturn(Mono.just(mockSchedulle));
         when(this.dateUtils.addMinutesToDate(any(Date.class), any(BigInteger.class))).thenReturn(time);
-        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any(OffsetDateTime.class))).thenReturn(mockSession);
+        when(this.getSessionBySchedulleIdAndStartDateAndEndDateUseCase.execute(anyString(), any(OffsetDateTime.class))).thenReturn(Mono.just(mockSession));
 
-        assertThrows(EntityInUseException.class, () -> this.openVoteSessionUseCase.execute(mockSession));
+        assertThrows(EntityInUseException.class, () -> this.openVoteSessionUseCase.execute(Mono.just(mockSession)).block());
     }
 }

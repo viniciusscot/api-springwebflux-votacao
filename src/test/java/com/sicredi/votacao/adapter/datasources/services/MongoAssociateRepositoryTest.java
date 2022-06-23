@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.annotation.DirtiesContext;
@@ -56,9 +55,9 @@ public class MongoAssociateRepositoryTest {
 
         final var associateModel = objectMapper.readValue(mockResultString, AssociateModel.class);
 
-        final var savedAssociate = this.mongoAssociateRepository.save(associateModel);
+        final var savedAssociate = this.mongoAssociateRepository.save(associateModel).block();
 
-        final var optionalRetrievedById = this.mongoAssociateRepository.findById(savedAssociate.getId());
+        final var optionalRetrievedById = this.mongoAssociateRepository.findById(savedAssociate.getId()).blockOptional();
         final var retrievedById = optionalRetrievedById.orElseThrow(IllegalArgumentException::new);
 
         assertThat(savedAssociate.getId(), equalTo(retrievedById.getId()));
@@ -67,7 +66,7 @@ public class MongoAssociateRepositoryTest {
     @Test
     @DisplayName("Should return optional blank when find a not exist register in mongo db")
     void shouldReturnOptionalIsPresentFalseWhenRecordDoNotExistsInMongoDB() {
-        final var optionalRetrievedById = this.mongoAssociateRepository.findById("1");
+        final var optionalRetrievedById = this.mongoAssociateRepository.findById("1").blockOptional();
         assertFalse(optionalRetrievedById.isPresent());
     }
 

@@ -1,6 +1,7 @@
 package com.sicredi.votacao.architecture;
 
 import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -8,7 +9,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.conditions.ArchConditions;
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
 
-@AnalyzeClasses(packages = "com.sicredi")
+@AnalyzeClasses(packages = "com.sicredi", importOptions = ImportOption.DoNotIncludeTests.class)
 public class InjectionTest {
 
     @ArchTest

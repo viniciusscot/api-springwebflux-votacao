@@ -3,6 +3,7 @@ package com.sicredi.votacao.internal.interactors.associate;
 import com.sicredi.votacao.internal.entities.Associate;
 import com.sicredi.votacao.internal.repositories.AssociateRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class GetAllAssociatesUseCase {
         this.associateRepository = associateRepository;
     }
 
-    public List<Associate> execute() {
+    public Flux<Associate> execute() {
         return this.associateRepository.getAll();
     }
 

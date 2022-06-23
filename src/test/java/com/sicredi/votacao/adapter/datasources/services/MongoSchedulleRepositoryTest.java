@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.annotation.DirtiesContext;
@@ -56,9 +55,9 @@ public class MongoSchedulleRepositoryTest {
 
         final var schedulleModel = objectMapper.readValue(mockResultString, SchedulleModel.class);
 
-        final var savedSchedulle = this.mongoSchedulleRepository.save(schedulleModel);
+        final var savedSchedulle = this.mongoSchedulleRepository.save(schedulleModel).block();
 
-        final var optionalRetrievedById = this.mongoSchedulleRepository.findById(savedSchedulle.getId());
+        final var optionalRetrievedById = this.mongoSchedulleRepository.findById(savedSchedulle.getId()).blockOptional();
         final var retrievedById = optionalRetrievedById.orElseThrow(IllegalArgumentException::new);
 
         assertThat(savedSchedulle.getId(), equalTo(retrievedById.getId()));
@@ -67,7 +66,7 @@ public class MongoSchedulleRepositoryTest {
     @Test
     @DisplayName("Should return optional blank when find a not exist register in mongo db")
     void shouldReturnOptionalIsPresentFalseWhenRecordDoNotExistsInMongoDB() {
-        final var optionalRetrievedById = this.mongoSchedulleRepository.findById("1");
+        final var optionalRetrievedById = this.mongoSchedulleRepository.findById("1").blockOptional();
         assertFalse(optionalRetrievedById.isPresent());
     }
 

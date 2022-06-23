@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sicredi.votacao.adapter.datasources.services.MongoAssociateRepository;
 import com.sicredi.votacao.adapter.datasources.services.model.AssociateModel;
 import com.sicredi.votacao.bootstrap.exceptions.AssociateNotFoundException;
+import com.sicredi.votacao.internal.entities.Associate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
-
-import java.util.Arrays;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -24,7 +24,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,9 +51,11 @@ public class AssociateDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, AssociateModel.class);
 
-        when(this.mongoAssociateRepository.save(any())).thenReturn(mockObject);
+        var mockEntryObject = objectMapper.readValue(mockResultString, Associate.class);
 
-        var dataSourceResponse = this.associateDataSource.save(any());
+        when(this.mongoAssociateRepository.save(any())).thenReturn(Mono.just(mockObject));
+
+        var dataSourceResponse = this.associateDataSource.save(Mono.just(mockEntryObject)).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -64,7 +65,7 @@ public class AssociateDataSourceTest {
     @Test
     @DisplayName("Should return void when delete associate")
     void shouldReturnVoidWhenDeleteAssociate() {
-        doNothing().when(this.mongoAssociateRepository).deleteById(anyString());
+        when(this.mongoAssociateRepository.deleteById(anyString())).thenReturn(Mono.empty());
 
         assertDoesNotThrow(() -> this.associateDataSource.delete(anyString()));
 
@@ -77,9 +78,9 @@ public class AssociateDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, AssociateModel.class);
 
-        when(this.mongoAssociateRepository.findById(anyString())).thenReturn(Optional.of(mockObject));
+        when(this.mongoAssociateRepository.findById(anyString())).thenReturn(Mono.just(mockObject));
 
-        var dataSourceResponse = this.associateDataSource.get(mockObject.getId());
+        var dataSourceResponse = this.associateDataSource.get(mockObject.getId()).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -88,9 +89,9 @@ public class AssociateDataSourceTest {
     @Test
     @DisplayName("Should throw exception when get by non-existing if")
     void shouldThrowExceptionWhenGetByNonExistingId() {
-        when(this.mongoAssociateRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(this.mongoAssociateRepository.findById(anyString())).thenReturn(Mono.empty());
 
-        assertThrows(AssociateNotFoundException.class, () -> this.associateDataSource.get(anyString()));
+        assertThrows(AssociateNotFoundException.class, () -> this.associateDataSource.get(anyString()).block());
     }
 
     @Test
@@ -100,12 +101,13 @@ public class AssociateDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, AssociateModel.class);
 
-        when(this.mongoAssociateRepository.findAll()).thenReturn(Arrays.asList(mockObject));
+        when(this.mongoAssociateRepository.findAll()).thenReturn(Flux.just(mockObject));
 
         var dataSourceResponse = this.associateDataSource.getAll();
 
         assertNotNull(dataSourceResponse);
-        assertThat(Integer.valueOf(1), equalTo(dataSourceResponse.size()));
+
+        dataSourceResponse.count().subscribe(c -> assertThat(1L, equalTo(c)));
 
     }
 }

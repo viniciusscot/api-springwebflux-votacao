@@ -1,9 +1,9 @@
 package com.sicredi.votacao.adapter.transportlayers.mapper;
 
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.ResultOfSchedulleResult;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.SchedulleInput;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.SchedulleResult;
-import com.sicredi.votacao.adapter.transportlayers.openapi.model.SessionResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.ResultOfSchedulleResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SchedulleInput;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SchedulleResult;
+import com.sicredi.votacao.adapter.transportlayers.restapi.dto.SessionResult;
 import com.sicredi.votacao.internal.entities.ResultOfSchedulle;
 import com.sicredi.votacao.internal.entities.Schedulle;
 import com.sicredi.votacao.internal.entities.Session;
@@ -11,7 +11,7 @@ import javax.annotation.processing.Generated;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2022-06-03T15:12:54-0300",
+    date = "2022-06-22T22:48:27-0300",
     comments = "version: 1.4.2.Final, compiler: javac, environment: Java 11.0.15 (Private Build)"
 )
 public class SchedulleMapperImpl implements SchedulleMapper {

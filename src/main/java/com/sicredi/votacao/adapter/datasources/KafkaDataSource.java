@@ -6,6 +6,7 @@ import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.repositories.KafkaRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component
 public class KafkaDataSource implements KafkaRepository {
@@ -20,8 +21,9 @@ public class KafkaDataSource implements KafkaRepository {
     }
 
     @Override
-    public void send(final Session session) {
+    public Mono<Void> send(final Session session) {
         this.kafkaProducer.send(this.topic, SessionMapper.INSTANCE.mapEvent(session));
-        return;
+
+        return Mono.empty();
     }
 }

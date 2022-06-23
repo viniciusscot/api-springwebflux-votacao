@@ -2,16 +2,12 @@ package com.sicredi.votacao.adapter.datasources;
 
 import com.sicredi.votacao.adapter.datasources.services.MongoSchedulleRepository;
 import com.sicredi.votacao.adapter.datasources.services.mapper.SchedulleMapper;
-import com.sicredi.votacao.bootstrap.exceptions.EntityInUseException;
 import com.sicredi.votacao.bootstrap.exceptions.SchedulleNotFoundException;
 import com.sicredi.votacao.internal.entities.Schedulle;
 import com.sicredi.votacao.internal.repositories.SchedulleRepository;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Component
 public class SchedulleDataSource implements SchedulleRepository {
@@ -26,28 +22,28 @@ public class SchedulleDataSource implements SchedulleRepository {
     }
 
     @Override
-    public Schedulle save(final Schedulle schedulle) {
-        final var schedulleModel = SchedulleMapper.INSTANCE.map(schedulle);
-        final var schedulleSaved = this.repository.save(schedulleModel);
-        return SchedulleMapper.INSTANCE.map(schedulleSaved);
+    public Mono<Schedulle> save(final Mono<Schedulle> schedulle) {
+        return schedulle
+                .map(SchedulleMapper.INSTANCE::map)
+                .flatMap(this.repository::save)
+                .map(SchedulleMapper.INSTANCE::map);
     }
 
     @Override
-    public void delete(final String schedulleId) {
-        this.repository.deleteById(schedulleId);
+    public Mono<Void> delete(final String schedulleId) {
+        return this.repository.deleteById(schedulleId);
     }
 
     @Override
-    public Schedulle get(final String schedulleId) {
+    public Mono<Schedulle> get(final String schedulleId) {
         return this.repository.findById(schedulleId)
-                .map(a -> SchedulleMapper.INSTANCE.map(a))
-                .orElseThrow(() -> new SchedulleNotFoundException(schedulleId));
+                .switchIfEmpty(Mono.error(new SchedulleNotFoundException(schedulleId)))
+                .map(SchedulleMapper.INSTANCE::map);
     }
 
     @Override
-    public List<Schedulle> getAll() {
-        return this.repository.findAll().stream()
-                .map(a -> SchedulleMapper.INSTANCE.map(a))
-                .collect(Collectors.toList());
+    public Flux<Schedulle> getAll() {
+        return this.repository.findAll()
+                .map(SchedulleMapper.INSTANCE::map);
     }
 }

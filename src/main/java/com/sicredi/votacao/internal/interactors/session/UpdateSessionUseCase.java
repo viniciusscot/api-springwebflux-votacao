@@ -2,8 +2,8 @@ package com.sicredi.votacao.internal.interactors.session;
 
 import com.sicredi.votacao.internal.entities.Session;
 import com.sicredi.votacao.internal.repositories.SessionRepository;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class UpdateSessionUseCase {
@@ -14,12 +14,9 @@ public class UpdateSessionUseCase {
         this.sessionRepository = sessionRepository;
     }
 
-    public Session execute(final Session session) {
-        var actualSession = this.sessionRepository.get(session.getId());
+    public Mono<Session> execute(final Mono<Session> session) {
 
-        BeanUtils.copyProperties(session, actualSession, "id");
-
-        return this.sessionRepository.save(actualSession);
+        return this.sessionRepository.save(session);
     }
 
 }

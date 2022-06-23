@@ -3,6 +3,8 @@ package com.sicredi.votacao.adapter.datasources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sicredi.votacao.adapter.datasources.services.MongoVoteRepository;
 import com.sicredi.votacao.adapter.datasources.services.model.VoteModel;
+import com.sicredi.votacao.internal.entities.Vote;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
-
-import java.util.Arrays;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -51,12 +52,12 @@ public class VoteDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, VoteModel.class);
 
-        when(this.mongoVoteRepository.findAll()).thenReturn(Arrays.asList(mockObject));
+        when(this.mongoVoteRepository.findAll()).thenReturn(Flux.just(mockObject));
 
         var dataSourceResponse = this.voteDataSource.getAll();
 
         assertNotNull(dataSourceResponse);
-        assertThat(Integer.valueOf(1), equalTo(dataSourceResponse.size()));
+        dataSourceResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
 
     }
 
@@ -66,10 +67,11 @@ public class VoteDataSourceTest {
         final var mockResultString = StreamUtils.copyToString(this.voteResource.getInputStream(), UTF_8);
 
         var mockObject = objectMapper.readValue(mockResultString, VoteModel.class);
+        var mockEntryObject = objectMapper.readValue(mockResultString, Vote.class);
 
-        when(this.mongoVoteRepository.save(any())).thenReturn(mockObject);
+        when(this.mongoVoteRepository.save(any())).thenReturn(Mono.just(mockObject));
 
-        var dataSourceResponse = this.voteDataSource.save(any());
+        var dataSourceResponse = this.voteDataSource.save(Mono.just(mockEntryObject)).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -85,9 +87,9 @@ public class VoteDataSourceTest {
 
         when(this.mongoVoteRepository
                 .findByAssociateIdAndSchedulleId(anyString(), anyString()))
-                .thenReturn(Optional.of(mockObject));
+                .thenReturn(Mono.just(mockObject));
 
-        var dataSourceResponse = this.voteDataSource.getByAssociateIdAndSessionId(anyString(), anyString());
+        var dataSourceResponse = this.voteDataSource.getByAssociateIdAndSessionId(anyString(), anyString()).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -98,9 +100,9 @@ public class VoteDataSourceTest {
     void shouldReturnNullWhenGetByAssociateIdAndSessionId() {
         when(this.mongoVoteRepository
                 .findByAssociateIdAndSchedulleId(anyString(), anyString()))
-                .thenReturn(Optional.empty());
+                .thenReturn(Mono.empty());
 
-        var dataSourceResponse = this.voteDataSource.getByAssociateIdAndSessionId(anyString(), anyString());
+        var dataSourceResponse = this.voteDataSource.getByAssociateIdAndSessionId(anyString(), anyString()).block();
 
         assertNull(dataSourceResponse);
     }
@@ -112,12 +114,12 @@ public class VoteDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, VoteModel.class);
 
-        when(this.mongoVoteRepository.findAllBySessionId(anyString())).thenReturn(Arrays.asList(mockObject));
+        when(this.mongoVoteRepository.findAllBySessionId(anyString())).thenReturn(Flux.just(mockObject));
 
         var dataSourceResponse = this.voteDataSource.getAllBySessionId(mockObject.getSessionId());
 
         assertNotNull(dataSourceResponse);
-        assertThat(Integer.valueOf(1), equalTo(dataSourceResponse.size()));
+        dataSourceResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
 
     }
 }

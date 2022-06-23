@@ -1,16 +1,16 @@
 package com.sicredi.votacao.internal.repositories;
 
 import com.sicredi.votacao.internal.entities.Associate;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface AssociateRepository {
 
-    Associate save(final Associate associate);
+    Mono<Associate> save(final Mono<Associate> associate);
 
-    void delete(final String associateId);
+    Mono<Void> delete(final String associateId);
 
-    Associate get(final String associateId);
+    Mono<Associate> get(final String associateId);
 
-    List<Associate> getAll();
+    Flux<Associate> getAll();
 }

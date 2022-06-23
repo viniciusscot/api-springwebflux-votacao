@@ -1,16 +1,16 @@
 package com.sicredi.votacao.internal.repositories;
 
 import com.sicredi.votacao.internal.entities.Schedulle;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface SchedulleRepository {
 
-    Schedulle save(final Schedulle schedulle);
+    Mono<Schedulle> save(final Mono<Schedulle> schedulle);
 
-    void delete(final String schedulleId);
+    Mono<Void> delete(final String schedulleId);
 
-    Schedulle get(final String schedulleId);
+    Mono<Schedulle> get(final String schedulleId);
 
-    List<Schedulle> getAll();
+    Flux<Schedulle> getAll();
 }

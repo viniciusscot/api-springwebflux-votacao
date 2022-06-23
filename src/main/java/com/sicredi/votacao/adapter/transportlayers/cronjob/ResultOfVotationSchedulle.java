@@ -13,10 +13,10 @@ public class ResultOfVotationSchedulle {
         this.endSessionUseCase = endSessionUseCase;
     }
 
-    @Scheduled(cron = "0 * * * * ?")
+//    @Scheduled(cron = "0 * * * * ?")
     public void finishedVotation() {
 
-        this.endSessionUseCase.execute();
+        this.endSessionUseCase.execute().subscribe();
 
     }
 

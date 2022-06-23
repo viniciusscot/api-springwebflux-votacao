@@ -1,6 +1,6 @@
 spring:
   application:
-    name: api-springboot-votacao
+    name: api-springwebflux-votacao
   cloud:
     config:
       enabled: false

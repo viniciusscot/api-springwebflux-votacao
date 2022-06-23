@@ -12,14 +12,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -45,8 +46,8 @@ public class SendMessageUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Session.class);
 
-        doNothing().when(this.kafkaRepository).send(any(Session.class));
+        when(this.kafkaRepository.send(any(Session.class))).thenReturn(Mono.empty());
 
-        assertDoesNotThrow(() -> this.sendMessageUseCase.execute(mockObject));
+        assertDoesNotThrow(() -> this.sendMessageUseCase.execute(Mono.just(mockObject)).block());
     }
 }

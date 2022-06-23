@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sicredi.votacao.adapter.datasources.services.MongoSchedulleRepository;
 import com.sicredi.votacao.adapter.datasources.services.model.SchedulleModel;
 import com.sicredi.votacao.bootstrap.exceptions.SchedulleNotFoundException;
+import com.sicredi.votacao.internal.entities.Schedulle;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
-
-import java.util.Arrays;
-import java.util.Optional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -52,9 +53,11 @@ public class SchedulleDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, SchedulleModel.class);
 
-        when(this.mongoSchedulleRepository.save(any())).thenReturn(mockObject);
+        var mockEntryObject = objectMapper.readValue(mockResultString, Schedulle.class);
 
-        var dataSourceResponse = this.schedulleDataSource.save(any());
+        when(this.mongoSchedulleRepository.save(any())).thenReturn(Mono.just(mockObject));
+
+        var dataSourceResponse = this.schedulleDataSource.save(Mono.just(mockEntryObject)).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -64,9 +67,9 @@ public class SchedulleDataSourceTest {
     @Test
     @DisplayName("Should return void when delete schedulle")
     void shouldReturnVoidWhenDeleteSchedulle() {
-        doNothing().when(this.mongoSchedulleRepository).deleteById(anyString());
+        when(this.mongoSchedulleRepository.deleteById(anyString())).thenReturn(Mono.empty());
 
-        assertDoesNotThrow(() -> this.schedulleDataSource.delete(anyString()));
+        assertDoesNotThrow(() -> this.schedulleDataSource.delete(anyString()).block());
 
     }
 
@@ -77,9 +80,9 @@ public class SchedulleDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, SchedulleModel.class);
 
-        when(this.mongoSchedulleRepository.findById(anyString())).thenReturn(Optional.of(mockObject));
+        when(this.mongoSchedulleRepository.findById(anyString())).thenReturn(Mono.just((mockObject)));
 
-        var dataSourceResponse = this.schedulleDataSource.get(mockObject.getId());
+        var dataSourceResponse = this.schedulleDataSource.get(mockObject.getId()).block();
 
         assertNotNull(dataSourceResponse);
         assertThat(mockObject.getId(), equalTo(dataSourceResponse.getId()));
@@ -88,9 +91,9 @@ public class SchedulleDataSourceTest {
     @Test
     @DisplayName("Should throw exception when get by non-existing if")
     void shouldThrowExceptionWhenGetByNonExistingId() {
-        when(this.mongoSchedulleRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(this.mongoSchedulleRepository.findById(anyString())).thenReturn(Mono.empty());
 
-        assertThrows(SchedulleNotFoundException.class, () -> this.schedulleDataSource.get(anyString()));
+        assertThrows(SchedulleNotFoundException.class, () -> this.schedulleDataSource.get(anyString()).block());
     }
 
     @Test
@@ -100,12 +103,12 @@ public class SchedulleDataSourceTest {
 
         var mockObject = objectMapper.readValue(mockResultString, SchedulleModel.class);
 
-        when(this.mongoSchedulleRepository.findAll()).thenReturn(Arrays.asList(mockObject));
+        when(this.mongoSchedulleRepository.findAll()).thenReturn(Flux.just(mockObject));
 
         var dataSourceResponse = this.schedulleDataSource.getAll();
 
         assertNotNull(dataSourceResponse);
-        assertThat(Integer.valueOf(1), equalTo(dataSourceResponse.size()));
+        dataSourceResponse.count().subscribe(c -> assertThat(1L, Matchers.equalTo(c)));
 
     }
 }

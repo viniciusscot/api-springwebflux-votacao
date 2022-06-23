@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -42,7 +43,7 @@ public class FindVoteByAssociateIdAndSchedulleIdThenTrownUseCaseTest {
     @Test
     @DisplayName("Should return void when find vote by associate id and schedulle id")
     void shouldReturnVoidWhenFindVoteByAssociateIdAndSchedulleId() {
-        when(this.voteRepository.getByAssociateIdAndSessionId(anyString(), anyString())).thenReturn(null);
+        when(this.voteRepository.getByAssociateIdAndSessionId(anyString(), anyString())).thenReturn(Mono.empty());
 
         assertDoesNotThrow(() -> this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase.execute(anyString(), anyString()));
     }
@@ -54,7 +55,7 @@ public class FindVoteByAssociateIdAndSchedulleIdThenTrownUseCaseTest {
 
         var mockObject = objectMapper.readValue(mockResultString, Vote.class);
 
-        when(this.voteRepository.getByAssociateIdAndSessionId(anyString(), anyString())).thenReturn(mockObject);
+        when(this.voteRepository.getByAssociateIdAndSessionId(anyString(), anyString())).thenReturn(Mono.just(mockObject));
 
         assertThrows(VoteAlreadyComputedException.class, () -> this.findVoteByAssociateIdAndSchedulleIdThenTrownUseCase.execute(mockObject.getAssociateId(), mockObject.getSchedulleId()));
     }
